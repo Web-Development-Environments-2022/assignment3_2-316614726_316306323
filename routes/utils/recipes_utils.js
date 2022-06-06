@@ -15,7 +15,7 @@ async function getRecipeInformationAPI(recipe_id) {
   });
 }
 
-async function getRecipe(recipe_id) {
+async function getRecipePreview(recipe_id) {
   let recipe_info = await getRecipeInformationAPI(recipe_id);
   let {
     id,
@@ -40,6 +40,37 @@ async function getRecipe(recipe_id) {
   };
 }
 
+async function getRecipe(recipe_id) {
+  let recipe_info = await getRecipeInformationAPI(recipe_id);
+  let {
+    id,
+    title,
+    readyInMinutes,
+    image,
+    aggregateLikes,
+    vegan,
+    vegetarian,
+    glutenFree,
+    extendedIngredients,
+    servings,
+    instructions,
+  } = recipe_info.data;
+
+  return {
+    id: id,
+    title: title,
+    readyInMinutes: readyInMinutes,
+    image: image,
+    popularity: aggregateLikes,
+    vegan: vegan,
+    vegetarian: vegetarian,
+    glutenFree: glutenFree,
+    ingredients: extendedIngredients,
+    servings: servings,
+    instructions: instructions,
+  };
+}
+
 async function getRandomRecipesAPI() {
   return await axios.get(`${api_domain}/random`, {
     params: {
@@ -52,7 +83,6 @@ async function getRandomRecipesAPI() {
 async function getRandomRecipes() {
   let recipes_info = await getRandomRecipesAPI();
   let recipes = [];
-  console.log(recipes_info);
   recipes_info.data.recipes.map((recipe) => {
     let {
       id,
@@ -83,7 +113,6 @@ async function getRandomRecipes() {
 async function SearchRecipesAPI(queryParams) {
   queryParams["apiKey"] = process.env.spooncular_apiKey;
   queryParams["number"] ? null : (queryParams["number"] = 5);
-  console.log(queryParams);
   return await axios.get(`${api_domain}/complexSearch`, {
     params: queryParams,
   });
@@ -91,11 +120,19 @@ async function SearchRecipesAPI(queryParams) {
 
 async function SearchRecipes(queryParams) {
   let recipes_info = await SearchRecipesAPI(queryParams);
+  recipesId = [];
+  recipes_info.data.results.map((recipe) => recipesId.push(recipe.id));
+  return getRecipesPreview(recipesId);
+}
+
+async function getRecipesPreview(recipesArray) {
   return Promise.all(
-    recipes_info.data.results.map((recipe) => getRecipe(recipe.id))
+    recipesArray.map((recipeId) => getRecipePreview(recipeId))
   );
 }
 
+exports.getRecipePreview = getRecipePreview;
 exports.getRecipe = getRecipe;
+exports.getRecipesPreview = getRecipesPreview;
 exports.getRandomRecipes = getRandomRecipes;
 exports.SearchRecipes = SearchRecipes;
