@@ -19,6 +19,14 @@ async function getFavoriteRecipes(username) {
   return recipes_id;
 }
 
+async function getFamilyRecipes(username) {
+  const recipes_id = await DButils.execQuery(
+    `select recipeId from family where username='${username}'`
+  );
+  return recipes_id;
+}
+
 exports.markAsFavorite = markAsFavorite;
 exports.markAsWatched = markAsWatched;
 exports.getFavoriteRecipes = getFavoriteRecipes;
+exports.getFamilyRecipes = getFamilyRecipes;
