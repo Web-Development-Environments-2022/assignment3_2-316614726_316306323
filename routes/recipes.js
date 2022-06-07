@@ -8,7 +8,6 @@ const DButils = require("./utils/DButils");
  * Authenticate all incoming requests by middleware - MAYBE NEED TO DELETE TODO
  */
 router.use(async function (req, res, next) {
-  console.log(req.session);
   req.session.username = "ori";
   if (req.session && req.session.username) {
     DButils.execQuery("SELECT username FROM users")
@@ -59,6 +58,21 @@ router.get("/getRecipe/:recipeId", async (req, res, next) => {
     const username = req.session.username;
     await user_utils.markAsWatched(username, req.params.recipeId);
     res.send(recipe);
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * This path gets body with new recipe and saves it into the db.
+ */
+router.post("/createNewRecipe", async (req, res, next) => {
+  try {
+    req.session.username = "ori";
+    const username = req.session.username;
+    const recipe = req.body.recipe;
+    await recipes_utils.addNewRecipe(username, recipe);
+    res.status(200).send("The Recipe successfully saved in family recipes!");
   } catch (error) {
     next(error);
   }

@@ -28,6 +28,7 @@ router.use(async function (req, res, next) {
  */
 router.post("/favorites", async (req, res, next) => {
   try {
+    req.session.username = "ori";
     const username = req.session.username;
     const recipe_id = req.body.recipeId;
     await user_utils.markAsFavorite(username, recipe_id);
@@ -42,6 +43,7 @@ router.post("/favorites", async (req, res, next) => {
  */
 router.get("/favorites", async (req, res, next) => {
   try {
+    req.session.username = "ori";
     const username = req.session.username;
     let favorite_recipes = {};
     const recipes_id = await user_utils.getFavoriteRecipes(username);
@@ -54,35 +56,46 @@ router.get("/favorites", async (req, res, next) => {
   }
 });
 
-/**
- * This path gets body with recipeId,owner,whenDeserved and save this recipe in the family list of the logged-in user
- */
-router.post("/family", async (req, res, next) => {
-  try {
-    const username = req.session.username;
-    const recipe_id = req.body.recipeId;
-    const recipe_owner = req.body.owner;
-    const recipe_whenDeserved = req.body.whenDeserved;
-    await user_utils.addToFamily(
-      username,
-      recipe_id,
-      recipe_owner,
-      recipe_whenDeserved
-    );
-    res.status(200).send("The Recipe successfully saved as favorite");
-  } catch (error) {
-    next(error);
-  }
-});
+// /**
+//  * This path gets body with recipeId,owner,whenDeserved and save this recipe in the family list of the logged-in user
+//  */
+// router.post("/family", async (req, res, next) => {
+//   try {
+//     req.session.username = "ori";
+//     const username = req.session.username;
+//     const familyData = req.body.familyData;
+//     await user_utils.addToFamily(username, familyData);
+//     res.status(200).send("The Recipe successfully saved in family recipes!");
+//   } catch (error) {
+//     next(error);
+//   }
+// });
 
 /**
  * This path returns the favorites recipes that were saved by the logged-in user
  */
 router.get("/family", async (req, res, next) => {
   try {
+    req.session.username = "ori";
     const username = req.session.username;
-    let family_recipes = {};
     const recipes_id = await user_utils.getFamilyRecipes(username);
+    let recipes_id_array = [];
+    recipes_id.map((element) => recipes_id_array.push(element.recipeId)); //extracting the recipe ids into array
+    const results = await recipe_utils.getRecipesPreview(recipes_id_array);
+    res.status(200).send(results);
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * This path returns the last watched recipes by the current user that logged-in.
+ */
+router.get("/lastWatches", async (req, res, next) => {
+  try {
+    req.session.username = "ori";
+    const username = req.session.username;
+    const recipes_id = await user_utils.getLastWatches(username);
     let recipes_id_array = [];
     recipes_id.map((element) => recipes_id_array.push(element.recipeId)); //extracting the recipe ids into array
     const results = await recipe_utils.getRecipesPreview(recipes_id_array);

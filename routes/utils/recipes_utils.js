@@ -1,5 +1,7 @@
 const axios = require("axios");
 const api_domain = "https://api.spoonacular.com/recipes";
+const DButils = require("./DButils");
+
 
 /**
  * Get recipes list from spooncular response and extract the relevant recipe data for preview
@@ -130,6 +132,34 @@ async function getRecipesPreview(recipesArray) {
     recipesArray.map((recipeId) => getRecipePreview(recipeId))
   );
 }
+
+async function addNewRecipe(username,recipe){
+  // fix the add recipe method and add the ingredients to the ing-table
+  // check family get
+  // get personal
+  {
+    title,
+    readyInMinutes,
+    image,
+    popularity,
+    isVegan,
+    isVegetarian,
+    isGlutenFree,
+    extendedIngredients,
+    servings,
+    instructions
+  } = recipe;
+
+  await DButils.execQuery(
+    `insert ignore into newrecipes values ('${image}','${title}','${readyInMinutes}','${popularity}','${isVegan}','${isVegetarian}','${isGlutenFree}','${servings}','${instructions}')`
+  );
+
+  await DButils.execQuery(
+    `insert ignore into personal values ('${username}','${id}')`
+  );
+  
+}
+
 
 exports.getRecipePreview = getRecipePreview;
 exports.getRecipe = getRecipe;
