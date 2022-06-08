@@ -7,8 +7,6 @@ async function markAsFavorite(username, recipe_id) {
 }
 
 async function markAsWatched(username, recipe_id) {
-  const currDate = new Date().toISOString().slice(0, 19).replace("T", " ");
-  console.log(currDate);
   await DButils.execQuery(
     `insert into watched values ('${username}','${recipe_id}',NOW()) ON DUPLICATE KEY UPDATE time=NOW()`
   );
@@ -29,17 +27,16 @@ async function getPersonalRecipes(username) {
 }
 
 async function getFamilyRecipes(username) {
-  const recipes_id = await DButils.execQuery(
-    `select recipeId from family where username='${username}'`
+  const recipes = await DButils.execQuery(
+    `select * from family where username='${username}'`
   );
-  return recipes_id;
-}
 
-async function addToFamily(username, familyData) {
-  const { recipeId, owner, whenDeserved } = familyData;
-  await DButils.execQuery(
-    `insert into family values ('${username}','${recipeId}','${owner}','${whenDeserved}')`
-  );
+  for (let i = 0; i < recipes.length; i++) {
+    recipes[i].ingredients = await DButils.execQuery(
+      `select ingredient,quantity,units from recipeingredients where recipeId='${recipes[i].recipeId}'`
+    );
+  }
+  return recipes;
 }
 
 async function getLastWatches(username) {
@@ -53,6 +50,5 @@ exports.markAsFavorite = markAsFavorite;
 exports.getFavoriteRecipes = getFavoriteRecipes;
 exports.getPersonalRecipes = getPersonalRecipes;
 exports.markAsWatched = markAsWatched;
-exports.addToFamily = addToFamily;
 exports.getFamilyRecipes = getFamilyRecipes;
 exports.getLastWatches = getLastWatches;

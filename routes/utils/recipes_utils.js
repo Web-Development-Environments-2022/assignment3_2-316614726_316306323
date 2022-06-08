@@ -46,7 +46,6 @@ async function checkPersonalRecipe(username, recipe_id) {
   let recipe = await DButils.execQuery(
     `SELECT recipeId FROM personal WHERE username='${username}' AND recipeId='${recipe_id}'`
   );
-  console.log(`the recipe found in db: ${recipe}`);
   return recipe.recipeId;
 }
 
@@ -55,7 +54,6 @@ async function getRecipeInformationDB(recipe_id) {
     `SELECT * FROM newrecipe WHERE recipeId='${recipe_id}'`
   );
   let ing = await getIngredientsRecipeDB(recipe_id);
-  console.log(`ingredients found in GetRecipeInfoDB: ${ing}`);
   recipe.ingredients = ing;
   return recipe;
 }
@@ -64,7 +62,6 @@ async function getIngredientsRecipeDB(recipe_id) {
   let recipeIng = await DButils.execQuery(
     `SELECT ingredient,quantity,units FROM recipeingredients WHERE recipeId='${recipe_id}'`
   );
-  console.log(`the recipe ingredients found in db: ${recipeIng}`);
   return recipeIng;
 }
 
@@ -166,11 +163,6 @@ async function getRecipesPreview(recipesArray) {
 }
 
 async function addNewRecipe(username, recipe) {
-  // fix the add recipe method and add the ingredients to the ing-table
-  // check family get
-  // get personal
-  console.log(`username: ${username}`);
-  console.log(`recipe: ${recipe}`);
   let {
     title,
     readyInMinutes,
@@ -201,22 +193,14 @@ async function addNewRecipe(username, recipe) {
       `insert ignore into personal values ('${username}','${id}')`
     );
 
-    console.log(ingredients);
-
     for (let i = 0; i < ingredients.length; i++) {
       let ing = ingredients[i];
-      console.log(`ing ${i}: ${ing}`);
       await DButils.execQuery(
         `insert into recipeingredients values ('${id}','${ing.name}','${ing.quantity}','${ing.units}')`
       );
     }
-    // Promise.all(
-    //   ingredients.map((ing) =>
-
-    //   )
-    // );
   } catch (err) {
-    console.log(err);
+    return err;
   }
 }
 
