@@ -21,6 +21,13 @@ async function getFavoriteRecipes(username) {
   return recipes_id;
 }
 
+async function getPersonalRecipes(username) {
+  const recipes_id = await DButils.execQuery(
+    `select recipeId from personal where username='${username}'`
+  );
+  return recipes_id;
+}
+
 async function getFamilyRecipes(username) {
   const recipes_id = await DButils.execQuery(
     `select recipeId from family where username='${username}'`
@@ -30,9 +37,6 @@ async function getFamilyRecipes(username) {
 
 async function addToFamily(username, familyData) {
   const { recipeId, owner, whenDeserved } = familyData;
-  console.log(familyData);
-  console.log(owner);
-  console.log(whenDeserved);
   await DButils.execQuery(
     `insert into family values ('${username}','${recipeId}','${owner}','${whenDeserved}')`
   );
@@ -47,6 +51,7 @@ async function getLastWatches(username) {
 
 exports.markAsFavorite = markAsFavorite;
 exports.getFavoriteRecipes = getFavoriteRecipes;
+exports.getPersonalRecipes = getPersonalRecipes;
 exports.markAsWatched = markAsWatched;
 exports.addToFamily = addToFamily;
 exports.getFamilyRecipes = getFamilyRecipes;

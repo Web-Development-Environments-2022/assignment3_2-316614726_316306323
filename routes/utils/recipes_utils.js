@@ -1,7 +1,7 @@
 const axios = require("axios");
+const { NodeBaseExport } = require("readable-stream");
 const api_domain = "https://api.spoonacular.com/recipes";
 const DButils = require("./DButils");
-
 
 /**
  * Get recipes list from spooncular response and extract the relevant recipe data for preview
@@ -42,8 +42,40 @@ async function getRecipePreview(recipe_id) {
   };
 }
 
-async function getRecipe(recipe_id) {
-  let recipe_info = await getRecipeInformationAPI(recipe_id);
+async function checkPersonalRecipe(username, recipe_id) {
+  let recipe = await DButils.execQuery(
+    `SELECT recipeId FROM personal WHERE username='${username}' AND recipeId='${recipe_id}'`
+  );
+  console.log(`the recipe found in db: ${recipe}`);
+  return recipe.recipeId;
+}
+
+async function getRecipeInformationDB(recipe_id) {
+  let recipe = await DButils.execQuery(
+    `SELECT * FROM newrecipe WHERE recipeId='${recipe_id}'`
+  );
+  let ing = await getIngredientsRecipeDB(recipe_id);
+  console.log(`ingredients found in GetRecipeInfoDB: ${ing}`);
+  recipe.ingredients = ing;
+  return recipe;
+}
+
+async function getIngredientsRecipeDB(recipe_id) {
+  let recipeIng = await DButils.execQuery(
+    `SELECT ingredient,quantity,units FROM recipeingredients WHERE recipeId='${recipe_id}'`
+  );
+  console.log(`the recipe ingredients found in db: ${recipeIng}`);
+  return recipeIng;
+}
+
+async function getRecipe(username, recipe_id) {
+  let recipeFound = await checkPersonalRecipe(username, recipe_id); // checks if the user has the specific recipe id
+  if (recipeFound) {
+    let recipe = await getRecipeInformationDB(recipe_id); // create the recipe
+    return recipe;
+  }
+
+  recipe_info = await getRecipeInformationAPI(recipe_id);
   let {
     id,
     title,
@@ -133,11 +165,13 @@ async function getRecipesPreview(recipesArray) {
   );
 }
 
-async function addNewRecipe(username,recipe){
+async function addNewRecipe(username, recipe) {
   // fix the add recipe method and add the ingredients to the ing-table
   // check family get
   // get personal
-  {
+  console.log(`username: ${username}`);
+  console.log(`recipe: ${recipe}`);
+  let {
     title,
     readyInMinutes,
     image,
@@ -145,22 +179,48 @@ async function addNewRecipe(username,recipe){
     isVegan,
     isVegetarian,
     isGlutenFree,
-    extendedIngredients,
+    ingredients,
     servings,
-    instructions
+    instructions,
   } = recipe;
 
-  await DButils.execQuery(
-    `insert ignore into newrecipes values ('${image}','${title}','${readyInMinutes}','${popularity}','${isVegan}','${isVegetarian}','${isGlutenFree}','${servings}','${instructions}')`
-  );
+  try {
+    await DButils.execQuery(
+      `insert ignore into newrecipes values ('NULL','${image}','${title}','${readyInMinutes}','${popularity}',
+      '${isVegan ? 1 : 0}','${isGlutenFree ? 1 : 0}','${
+        isVegetarian ? 1 : 0
+      }','${servings}','${instructions}')`
+    );
 
-  await DButils.execQuery(
-    `insert ignore into personal values ('${username}','${id}')`
-  );
-  
+    let id = await DButils.execQuery(
+      `SELECT * FROM newrecipes ORDER BY recipeId DESC LIMIT 0, 1`
+    );
+    id = id[0].recipeId;
+
+    await DButils.execQuery(
+      `insert ignore into personal values ('${username}','${id}')`
+    );
+
+    console.log(ingredients);
+
+    for (let i = 0; i < ingredients.length; i++) {
+      let ing = ingredients[i];
+      console.log(`ing ${i}: ${ing}`);
+      await DButils.execQuery(
+        `insert into recipeingredients values ('${id}','${ing.name}','${ing.quantity}','${ing.units}')`
+      );
+    }
+    // Promise.all(
+    //   ingredients.map((ing) =>
+
+    //   )
+    // );
+  } catch (err) {
+    console.log(err);
+  }
 }
 
-
+exports.addNewRecipe = addNewRecipe;
 exports.getRecipePreview = getRecipePreview;
 exports.getRecipe = getRecipe;
 exports.getRecipesPreview = getRecipesPreview;

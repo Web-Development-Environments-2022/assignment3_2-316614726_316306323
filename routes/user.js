@@ -56,6 +56,23 @@ router.get("/favorites", async (req, res, next) => {
   }
 });
 
+/**
+ * This path returns the personal recipes that were saved by the logged-in user
+ */
+router.get("/personal", async (req, res, next) => {
+  try {
+    req.session.username = "ori";
+    const username = req.session.username;
+    const recipes_id = await user_utils.getPersonalRecipes(username);
+    let recipes_id_array = [];
+    recipes_id.map((element) => recipes_id_array.push(element.recipeId)); //extracting the recipe ids into array
+    const results = await recipe_utils.getRecipesPreview(recipes_id_array);
+    res.status(200).send(results);
+  } catch (error) {
+    next(error);
+  }
+});
+
 // /**
 //  * This path gets body with recipeId,owner,whenDeserved and save this recipe in the family list of the logged-in user
 //  */

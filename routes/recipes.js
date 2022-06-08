@@ -54,8 +54,8 @@ router.get("/SearchRecipes", async (req, res, next) => {
  */
 router.get("/getRecipe/:recipeId", async (req, res, next) => {
   try {
-    const recipe = await recipes_utils.getRecipe(req.params.recipeId);
     const username = req.session.username;
+    const recipe = await recipes_utils.getRecipe(username, req.params.recipeId);
     await user_utils.markAsWatched(username, req.params.recipeId);
     res.send(recipe);
   } catch (error) {
@@ -70,9 +70,9 @@ router.post("/createNewRecipe", async (req, res, next) => {
   try {
     req.session.username = "ori";
     const username = req.session.username;
-    const recipe = req.body.recipe;
+    const recipe = req.body;
     await recipes_utils.addNewRecipe(username, recipe);
-    res.status(200).send("The Recipe successfully saved in family recipes!");
+    res.status(200).send("The Recipe successfully saved in personal recipes!");
   } catch (error) {
     next(error);
   }
