@@ -8,7 +8,6 @@ const DButils = require("./utils/DButils");
  * Authenticate all incoming requests by middleware - MAYBE NEED TO DELETE TODO
  */
 router.use(async function (req, res, next) {
-  req.session.username = "ori";
   if (req.session && req.session.username) {
     DButils.execQuery("SELECT username FROM users")
       .then((users) => {
@@ -68,7 +67,6 @@ router.get("/getRecipe/:recipeId", async (req, res, next) => {
  */
 router.post("/createNewRecipe", async (req, res, next) => {
   try {
-    req.session.username = "ori";
     const username = req.session.username;
     const recipe = req.body;
     await recipes_utils.addNewRecipe(username, recipe);

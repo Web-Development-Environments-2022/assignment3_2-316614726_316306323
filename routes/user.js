@@ -8,7 +8,6 @@ const recipe_utils = require("./utils/recipes_utils");
  * Authenticate all incoming requests by middleware
  */
 router.use(async function (req, res, next) {
-  req.session.username = "ori";
   if (req.session && req.session.username) {
     DButils.execQuery("SELECT username FROM users")
       .then((users) => {
@@ -28,7 +27,6 @@ router.use(async function (req, res, next) {
  */
 router.post("/favorites", async (req, res, next) => {
   try {
-    req.session.username = "ori";
     const username = req.session.username;
     const recipe_id = req.body.recipeId;
     await user_utils.markAsFavorite(username, recipe_id);
@@ -43,7 +41,6 @@ router.post("/favorites", async (req, res, next) => {
  */
 router.get("/favorites", async (req, res, next) => {
   try {
-    req.session.username = "ori";
     const username = req.session.username;
     let favorite_recipes = {};
     const recipes_id = await user_utils.getFavoriteRecipes(username);
@@ -61,7 +58,6 @@ router.get("/favorites", async (req, res, next) => {
  */
 router.get("/personal", async (req, res, next) => {
   try {
-    req.session.username = "ori";
     const username = req.session.username;
     const recipes_id = await user_utils.getPersonalRecipes(username);
     let recipes_id_array = [];
@@ -78,7 +74,6 @@ router.get("/personal", async (req, res, next) => {
  */
 router.get("/family", async (req, res, next) => {
   try {
-    req.session.username = "ori";
     const username = req.session.username;
     const recipes = await user_utils.getFamilyRecipes(username);
     res.status(200).send(recipes);
@@ -92,7 +87,6 @@ router.get("/family", async (req, res, next) => {
  */
 router.get("/lastWatches", async (req, res, next) => {
   try {
-    req.session.username = "ori";
     const username = req.session.username;
     const recipes_id = await user_utils.getLastWatches(username);
     let recipes_id_array = [];
