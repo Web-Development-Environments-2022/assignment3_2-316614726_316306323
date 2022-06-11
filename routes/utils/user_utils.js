@@ -46,9 +46,30 @@ async function getLastWatches(username) {
   return lastWatches;
 }
 
+async function isWatched(username, recipeId) {
+  let res = await DButils.execQuery(
+    `select recipeId from watched where username='${username}' AND recipeId='${recipeId}'`
+  );
+  if (res.length == 0) {
+    return false;
+  }
+  return true;
+}
+async function isFavorite(username, recipeId) {
+  let res = await DButils.execQuery(
+    `select recipeId from favorites where username='${username}' AND recipeId='${recipeId}'`
+  );
+  if (res.length == 0) {
+    return false;
+  }
+  return true;
+}
+
 exports.markAsFavorite = markAsFavorite;
 exports.getFavoriteRecipes = getFavoriteRecipes;
 exports.getPersonalRecipes = getPersonalRecipes;
 exports.markAsWatched = markAsWatched;
 exports.getFamilyRecipes = getFamilyRecipes;
 exports.getLastWatches = getLastWatches;
+exports.isWatched = isWatched;
+exports.isFavorite = isFavorite;

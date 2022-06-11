@@ -2,6 +2,7 @@ const axios = require("axios");
 const { NodeBaseExport } = require("readable-stream");
 const api_domain = "https://api.spoonacular.com/recipes";
 const DButils = require("./DButils");
+const user_utils = require("./user_utils");
 
 /**
  * Get recipes list from spooncular response and extract the relevant recipe data for preview
@@ -17,8 +18,14 @@ async function getRecipeInformationAPI(recipe_id) {
   });
 }
 
-async function getRecipePreview(recipe_id) {
+async function getRecipePreview(username, recipe_id) {
   let recipe_info = await getRecipeInformationAPI(recipe_id);
+  let isWatched = username
+    ? await user_utils.isWatched(username, recipe_id)
+    : false;
+  let isFavorite = username
+    ? await user_utils.isFavorite(username, recipe_id)
+    : false;
   let {
     id,
     title,
@@ -39,6 +46,8 @@ async function getRecipePreview(recipe_id) {
     vegan: vegan,
     vegetarian: vegetarian,
     glutenFree: glutenFree,
+    isWatched: isWatched,
+    isFavorite: isFavorite,
   };
 }
 
@@ -66,9 +75,20 @@ async function getIngredientsRecipeDB(recipe_id) {
 }
 
 async function getRecipe(username, recipe_id) {
-  let recipeFound = await checkPersonalRecipe(username, recipe_id); // checks if the user has the specific recipe id
+  let recipeFound = username
+    ? await checkPersonalRecipe(username, recipe_id)
+    : false; // checks if the user has the specific recipe id
+  let isWatched = username
+    ? await user_utils.isWatched(username, recipe_id)
+    : false;
+  let isFavorite = username
+    ? await user_utils.isFavorite(username, recipe_id)
+    : false;
+
   if (recipeFound) {
     let recipe = await getRecipeInformationDB(recipe_id); // create the recipe
+    recipe.isWatched = isWatched;
+    recipe.isFavorite = isFavorite;
     return recipe;
   }
 
@@ -99,6 +119,8 @@ async function getRecipe(username, recipe_id) {
     ingredients: extendedIngredients,
     servings: servings,
     instructions: instructions,
+    isWatched: isWatched,
+    isFavorite: isFavorite,
   };
 }
 
@@ -111,10 +133,10 @@ async function getRandomRecipesAPI() {
   });
 }
 
-async function getRandomRecipes() {
+async function getRandomRecipes(username) {
   let recipes_info = await getRandomRecipesAPI();
   let recipes = [];
-  recipes_info.data.recipes.map((recipe) => {
+  recipes_info.data.recipes.map(async (recipe) => {
     let {
       id,
       title,
@@ -126,6 +148,11 @@ async function getRandomRecipes() {
       glutenFree,
     } = recipe;
 
+    let isWatched = username ? await user_utils.isWatched(username, id) : false;
+    let isFavorite = username
+      ? await user_utils.isFavorite(username, id)
+      : false;
+
     recipes.push({
       id: id,
       title: title,
@@ -135,6 +162,8 @@ async function getRandomRecipes() {
       vegan: vegan,
       vegetarian: vegetarian,
       glutenFree: glutenFree,
+      isWatched: isWatched,
+      isFavorite: isFavorite,
     });
   });
 
@@ -149,16 +178,16 @@ async function SearchRecipesAPI(queryParams) {
   });
 }
 
-async function SearchRecipes(queryParams) {
+async function SearchRecipes(username, queryParams) {
   let recipes_info = await SearchRecipesAPI(queryParams);
   recipesId = [];
   recipes_info.data.results.map((recipe) => recipesId.push(recipe.id));
-  return getRecipesPreview(recipesId);
+  return getRecipesPreview(username, recipesId);
 }
 
-async function getRecipesPreview(recipesArray) {
+async function getRecipesPreview(username, recipesArray) {
   return Promise.all(
-    recipesArray.map((recipeId) => getRecipePreview(recipeId))
+    recipesArray.map((recipeId) => getRecipePreview(username, recipeId))
   );
 }
 

@@ -46,7 +46,10 @@ router.get("/favorites", async (req, res, next) => {
     const recipes_id = await user_utils.getFavoriteRecipes(username);
     let recipes_id_array = [];
     recipes_id.map((element) => recipes_id_array.push(element.recipeId)); //extracting the recipe ids into array
-    const results = await recipe_utils.getRecipesPreview(recipes_id_array);
+    const results = await recipe_utils.getRecipesPreview(
+      username,
+      recipes_id_array
+    );
     res.status(200).send(results);
   } catch (error) {
     next(error);
@@ -62,7 +65,10 @@ router.get("/personal", async (req, res, next) => {
     const recipes_id = await user_utils.getPersonalRecipes(username);
     let recipes_id_array = [];
     recipes_id.map((element) => recipes_id_array.push(element.recipeId)); //extracting the recipe ids into array
-    const results = await recipe_utils.getRecipesPreview(recipes_id_array);
+    const results = await recipe_utils.getRecipesPreview(
+      username,
+      recipes_id_array
+    );
     res.status(200).send(results);
   } catch (error) {
     next(error);
@@ -91,7 +97,10 @@ router.get("/lastWatches", async (req, res, next) => {
     const recipes_id = await user_utils.getLastWatches(username);
     let recipes_id_array = [];
     recipes_id.map((element) => recipes_id_array.push(element.recipeId)); //extracting the recipe ids into array
-    const results = await recipe_utils.getRecipesPreview(recipes_id_array);
+    const results = await recipe_utils.getRecipesPreview(
+      username,
+      recipes_id_array
+    );
     res.status(200).send(results);
   } catch (error) {
     next(error);
