@@ -19,13 +19,33 @@ async function getRecipeInformationAPI(recipe_id) {
 }
 
 async function getRecipePreview(username, recipe_id) {
-  let recipe_info = await getRecipeInformationAPI(recipe_id);
+  let personalRecipeFound = username
+    ? await checkPersonalRecipe(username, recipe_id)
+    : false; // checks if the user has the specific recipe id
   let isWatched = username
     ? await user_utils.isWatched(username, recipe_id)
     : false;
   let isFavorite = username
     ? await user_utils.isFavorite(username, recipe_id)
     : false;
+
+  if (personalRecipeFound) {
+    let recipe = await getRecipeInformationDB(recipe_id); // create the recipe
+    return {
+      id: recipe.id,
+      title: recipe.title,
+      readyInMinutes: recipe.prepTimeInMinutes,
+      image: recipe.image,
+      popularity: recipe.popularity,
+      isVegan: recipe.isVegan,
+      isVegetarian: recipe.isVegetarian,
+      isGlutenFree: recipe.isGlutenFree,
+      isWatched: isWatched,
+      isFavorite: isFavorite,
+    };
+  }
+
+  let recipe_info = await getRecipeInformationAPI(recipe_id);
   let {
     id,
     title,
@@ -43,9 +63,9 @@ async function getRecipePreview(username, recipe_id) {
     readyInMinutes: readyInMinutes,
     image: image,
     popularity: aggregateLikes,
-    vegan: vegan,
-    vegetarian: vegetarian,
-    glutenFree: glutenFree,
+    isVegan: vegan,
+    isVegetarian: vegetarian,
+    isGlutenFree: glutenFree,
     isWatched: isWatched,
     isFavorite: isFavorite,
   };
@@ -55,13 +75,17 @@ async function checkPersonalRecipe(username, recipe_id) {
   let recipe = await DButils.execQuery(
     `SELECT recipeId FROM personal WHERE username='${username}' AND recipeId='${recipe_id}'`
   );
-  return recipe.recipeId;
+  return recipe[0] ? true : false;
 }
 
 async function getRecipeInformationDB(recipe_id) {
   let recipe = await DButils.execQuery(
-    `SELECT * FROM newrecipe WHERE recipeId='${recipe_id}'`
+    `SELECT * FROM newrecipes WHERE recipeId='${recipe_id}'`
   );
+  recipe = recipe[0];
+  recipe.isVegan = recipe.isVegan == 1;
+  recipe.isVegetarian = recipe.isVegetarian == 1;
+  recipe.isGlutenFree = recipe.isGlutenFree == 1;
   let ing = await getIngredientsRecipeDB(recipe_id);
   recipe.ingredients = ing;
   return recipe;
@@ -75,7 +99,7 @@ async function getIngredientsRecipeDB(recipe_id) {
 }
 
 async function getRecipe(username, recipe_id) {
-  let recipeFound = username
+  let personalRecipeFound = username
     ? await checkPersonalRecipe(username, recipe_id)
     : false; // checks if the user has the specific recipe id
   let isWatched = username
@@ -85,7 +109,7 @@ async function getRecipe(username, recipe_id) {
     ? await user_utils.isFavorite(username, recipe_id)
     : false;
 
-  if (recipeFound) {
+  if (personalRecipeFound) {
     let recipe = await getRecipeInformationDB(recipe_id); // create the recipe
     recipe.isWatched = isWatched;
     recipe.isFavorite = isFavorite;
@@ -113,9 +137,9 @@ async function getRecipe(username, recipe_id) {
     readyInMinutes: readyInMinutes,
     image: image,
     popularity: aggregateLikes,
-    vegan: vegan,
-    vegetarian: vegetarian,
-    glutenFree: glutenFree,
+    isVegan: vegan,
+    isVegetarian: vegetarian,
+    isGlutenFree: glutenFree,
     ingredients: extendedIngredients,
     servings: servings,
     instructions: instructions,
@@ -159,9 +183,9 @@ async function getRandomRecipes(username) {
       readyInMinutes: readyInMinutes,
       image: image,
       popularity: aggregateLikes,
-      vegan: vegan,
-      vegetarian: vegetarian,
-      glutenFree: glutenFree,
+      isVegan: vegan,
+      isVegetarian: vegetarian,
+      isGlutenFree: glutenFree,
       isWatched: isWatched,
       isFavorite: isFavorite,
     });
@@ -182,7 +206,17 @@ async function SearchRecipes(username, queryParams) {
   let recipes_info = await SearchRecipesAPI(queryParams);
   recipesId = [];
   recipes_info.data.results.map((recipe) => recipesId.push(recipe.id));
-  return getRecipesPreview(username, recipesId);
+  let resultRecipes = await getRecipesPreview(username, recipesId);
+  resultRecipes = await addInstructionsToRecipes(resultRecipes);
+  return resultRecipes;
+}
+
+async function addInstructionsToRecipes(recipes) {
+  for (let i = 0; i < recipes.length; i++) {
+    let recipeAPI = await getRecipe(null, recipes[i].id);
+    recipes[i].instructions = recipeAPI.instructions;
+  }
+  return recipes;
 }
 
 async function getRecipesPreview(username, recipesArray) {
@@ -206,17 +240,17 @@ async function addNewRecipe(username, recipe) {
   } = recipe;
 
   try {
+    let id = await DButils.execQuery(
+      `SELECT * FROM newrecipes ORDER BY recipeId ASC LIMIT 0, 1`
+    );
+    id = id[0] ? id[0].recipeId - 1 : -1000;
+
     await DButils.execQuery(
-      `insert ignore into newrecipes values ('NULL','${image}','${title}','${readyInMinutes}','${popularity}',
+      `insert ignore into newrecipes values ('${id}','${image}','${title}','${readyInMinutes}','${popularity}',
       '${isVegan ? 1 : 0}','${isGlutenFree ? 1 : 0}','${
         isVegetarian ? 1 : 0
       }','${servings}','${instructions}')`
     );
-
-    let id = await DButils.execQuery(
-      `SELECT * FROM newrecipes ORDER BY recipeId DESC LIMIT 0, 1`
-    );
-    id = id[0].recipeId;
 
     await DButils.execQuery(
       `insert ignore into personal values ('${username}','${id}')`
