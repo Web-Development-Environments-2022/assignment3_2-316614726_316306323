@@ -1,230 +1,759 @@
 openapi: 3.0.0
-info:
-  title: Recipes api
-  description: API for recipes project
-  version: 1.0.1
 servers:
-# local:
-- url: "http://127.0.0.1:3000"
-# remote:
-# - url: "http://132.72.65.211"
-  description: SwaggerHub API Auto Mocking hey
+  # Added by API Auto Mocking Plugin
+  - url: "http://127.0.0.1:3000"
+    description: SwaggerHub API
+info:
+  description: This is an API for recipe website
+  version: "1.0.0"
+  title: Recipe API
+  contact:
+    email: orisal@post.bgu.ac.il
+  license:
+    name: Apache 2.0
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
 tags:
-- name: Auth
-  description: All authentication related routes
-- name: Users
-  description: All the user's personal app info
-- name: Recipes
-  description: All reciepes general info
+  - name: recipes
+    description: Getting or updating recipes
+  - name: users
+    description: Getting users data
+  - name: auth
+    description: Login or registering new users
 paths:
   /register:
     post:
       tags:
-      - Auth
-      summary: A new user from the client is added to the server
-      description: A JSON object contains all the details about the new user.
+        - auth
+      summary: adds user to the system
+      description: adds user to the system
+      operationId: addUser
+      responses:
+        "201":
+          description: user created
+        "409":
+          description: user already exists
+        "404":
+          description: page not found
       requestBody:
-        description: Inventory item to add
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/User'
-        required: true
-      responses:
-        "201":
-          description: A new user has been added
-        "400":
-          description: wrong input parameters
+              $ref: "#/components/schemas/User"
+        description: user structure to add
   /login:
     post:
       tags:
-      - Auth
-      summary: Login an exist user
-      description: An exist user login to the system
+        - auth
+      summary: Logs user into the system
+      description: User try to login
+      operationId: loginUser
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoginScheme'
-        required: true
+              $ref: "#/components/schemas/Login"
       responses:
         "200":
-          description: |
-            User was found in the DB and authenitcated successfully. The session ID is returned in a cookie named `session`.  You should include this cookie in subsequent requests
-          headers:
-            Set-Cookie:
-              style: simple
-              explode: false
-              schema:
-                type: string
-                example: session=87s97sdhgf279293f8w0e9
-        "401":
-          description: Authentication failed
-  /logout:
-    post:
-      tags:
-        - Auth
-      summary: logout a user from the system and delete his cookie
-      responses:
-        "200":
-          description: "the user has ben successfully logged out"
-  /users/favorites:
+          description: successful login operation
+        "400":
+          description: Invalid username/password supplied
+        "404":
+          description: page not found
+
+  /family:
     get:
       tags:
-      - Users
-      summary: Return the favorite recipes that were saved by user
-      description: Get an array of recipes that were saved by a specific user
+        - users
+      summary: get all family recipes of the user
+      description: get all family recipes of the user
+      operationId: getUserFamilyRecipes
+      parameters:
+        - in: cookie
+          name: username
+          description: The username to retrieve its' family recipes
+          required: true
+          schema:
+            type: string
       responses:
         "200":
-          description: data about the user's favorites recipes returned
+          description: Returned user's family recipes
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/RecipePreview'
-        "401":
-          description: user is not authorized
-      security:
-      - cookieAuth: []
+                  $ref: "#/components/schemas/familyRecipe"
+        "404":
+          description: Username doesn't exist
+
+  /lastWatches:
+    get:
+      tags:
+        - users
+      summary: get 3 last watched recipes
+      description: get 3 last watched recipes by the user (their previews)
+      operationId: getLastWatches
+      parameters:
+        - in: cookie
+          name: username
+          description: The username to retrieve its' watches
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Returned user's last watched recipes previews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RecipePreview"
+        "404":
+          description: Username doesn't exist
+
+  /personal:
+    get:
+      tags:
+        - users
+      summary: get all personal recipes of the user
+      description: get all personal recipes of the user
+      operationId: getUserPersonalRecipes
+      parameters:
+        - in: cookie
+          name: username
+          description: The username to retrieve its' personal recipes
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Returned user's personal recipes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RecipePreview"
+        "404":
+          description: Username doesn't exist
+
+  /favorites:
+    get:
+      tags:
+        - users
+      summary: get all favorite recipes of the user
+      description: get all favorite recipes of the user
+      operationId: getUserFavoriteRecipes
+      parameters:
+        - in: cookie
+          name: username
+          description: The username to retrieve its' favorite recipes
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Returned user's favorite recipes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RecipePreview"
+        "404":
+          description: Username doesn't exist
     post:
       tags:
-      - Users
-      summary: save recipe in the favorites list of a user
-      description: save recipe in the favorites list of a user
+        - users
+      summary: add existing recipe to the user's favorites
+      description: add existing recipe to the user's favorites
+      operationId: addRecipeToFavorites
+      parameters:
+        - name: username
+          in: cookie
+          description: The username to add the recipe
+          required: true
+          schema:
+            type: string
       requestBody:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                reciepeId:
-                  type: string
-                  description: reciepe's id which the user saved
-                  example: 716429
+              type: integer
+        description: The recipeId to add for the user’s favorites
+        required: true
       responses:
         "200":
-          description: The Recipe successfully saved as favorite
-        "401":
-          description: user is not authorized
-      security:
-      - cookieAuth: []
-  /recipes/{recipeId}:
+          description: the recipe added to the user’s favorites successfuly
+        "400":
+          description: Invalid username - does not exist
+        "404":
+          description: Invalid recipe id - does not exist
+
+  /createNewRecipe:
+    post:
+      tags:
+        - recipes
+      summary: add new recipe to the website
+      description: User created new recipe in DB
+      operationId: addRecipe
+      parameters:
+        - name: username
+          in: cookie
+          description: The username that owns the recipe
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Recipe to add
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewRecipeForm"
+
+      responses:
+        "200":
+          description: the recipe added to the website successfully
+        "405":
+          description: Invalid recipe
+        "404":
+          description: page not found
+
+  /getRecipe/{recipeId}:
     get:
       tags:
-      - Recipes
-      summary: Return preview details on recipe by his ID
-      description: Return preview details on recipe by his ID
+        - recipes
+      summary: gets recipe and update views in DB
+      description: user asks for recipe
       parameters:
-      - name: recipeId
-        in: path
-        description: recipe's id
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: integer
+        - name: recipeId
+          in: path
+          description: recipe asked for
+          required: true
+          schema:
+            type: integer
+        - name: username
+          in: cookie
+          description: The username that wants to watch the recipe
+          required: true
+          schema:
+            type: string
       responses:
         "200":
-          description: data about the recipe
+          description: Retured recipe and updated views
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RecipePreview'
+                items:
+                  $ref: "#/components/schemas/Recipe"
         "404":
-          description: recipeId is not exists
+          description: Recipe not found
+        "405":
+          description: Username not found
+
+  /searchRecipes:
+    get:
+      tags:
+        - recipes
+      summary: get all the recipes corresponding to the query
+      description: users searches for recipe by query
+      operationId: searchRecipes
+      parameters:
+        - name: username
+          in: cookie
+          description: username to mark if recipes were watched of favorites
+          required: true
+          schema:
+            type: string
+        - name: cuisine
+          in: query
+          description: type of cuisine filter
+          required: false
+          schema:
+            type: string
+        - name: diet
+          in: query
+          description: type of diet filter
+          required: false
+          schema:
+            type: string
+        - name: intolerance
+          in: query
+          description: type of intolerance filter
+          required: false
+          schema:
+            type: string
+        - name: query
+          in: query
+          description: The recipe name to search for
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Returned recipes corresponding to the query
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RecipePreviewWithInsructions"
+        "404":
+          description: Not found any recipes for that search
+
+  /getRandomRecipes/:
+    get:
+      tags:
+        - recipes
+      summary: get 3 random recipes
+      description: get 3 random recipes
+      operationId: getRandom
+      parameters:
+        - name: username
+          in: cookie
+          description: username to mark if recipes were watched of favorites
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Returned 3 random recipes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RecipePreview"
+        "404":
+          description: Not found any recipes
+
 components:
   schemas:
+    Login:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 8
+          example: orisal
+        password:
+          type: string
+          minLength: 5
+          maxLength: 10
+          description: contains at least one number and one special character
+          example: 123abc$
+      example:
+        username: dor23
+        password: ori123
+
     User:
       type: object
+      required:
+        - username
+        - firstName
+        - lastName
+        - country
+        - password
+        - email
       properties:
         username:
-          maxLength: 8
+          type: string
           minLength: 3
+          maxLength: 8
+          description: only letters. must be unique (ID)
+          example: testUser
+        firstName:
           type: string
-          description: username conatins between 3 to 8 letters only
-          example: my_name
-        firstname:
+          description: only letters.
+          example: Israel
+        lastName:
           type: string
-          description: user's first name
-          example: my_first_name
-        lastname:
-          type: string
-          description: user's last name
-          example: my_last_name
+          description: only letters.
+          example: Israeli
         country:
           type: string
-          description: user's country
-          example: Israel
+          description: values must be from https://restcountries.eu/rest/v2/all
+          example: France
         password:
-          maxLength: 10
-          minLength: 5
           type: string
-          description: password conatins between 5 to 10 chars, at least one of them
-            is a number and a special char
-          format: password
-          example: my_name@12
+          minLength: 5
+          maxLength: 10
+          description: contains at least one number and one special character
+          example: 123abc$
         email:
-          pattern: email
           type: string
-          description: user's email
-          example: my_name12@gmail.com
-        # image-url:
-        #   pattern: URL
-        #   type: string
-        #   description: URL for the user's image
-        #   example: https://cloudinary.com/
-      description: Model containing user info
-    LoginScheme:
-      type: object
-      properties:
-        username:
-          maxLength: 8
-          minLength: 3
-          type: string
-          description: username conatins letters only
-        password:
-          maxLength: 10
-          minLength: 5
-          description: password conatins at least one number and one special char
-          format: password
+          format: email
+          example: aa@bgu.com
       example:
-        username: my_name
-        password: my_name@12
+        username: dor23
+        firstName: Israel
+        lastName: Israeli
+        country: France
+        password: 123abc$
+        email: aa@bgu.com
+
     RecipePreview:
       type: object
+      required:
+        - id
+        - image
+        - title
+        - readyInMinutes
+        - popularity
+        - isVegan
+        - isVegetarian
+        - isGlutenFree
+        - isWatched
+        - isFavorite
+      properties:
+        recipeId:
+          type: integer
+          description: recipe unique identifier
+          example: 3
+        image:
+          type: string
+          description: path to png/jpg
+          example: chicken.png
+        title:
+          type: string
+          description: only letters, dish description .
+          example: chicken with potatos
+        readyInMinutes:
+          type: integer
+          description: preparation time in minutes.
+          example: 100
+        popularity:
+          type: integer
+          description: number of likes the recipe got. Shows popularity
+          example: 100
+        isVegan:
+          type: boolean
+          description: Indicates if the dish is vegan
+          example: false
+        isVegetarian:
+          type: boolean
+          description: Indicates if the dish is vegetarian
+          example: false
+        isGlutenFree:
+          type: boolean
+          description: Indicates if the dish is gluten free
+          example: false
+        isWatched:
+          type: boolean
+          description: Indicates if the user already watched this recipe
+          example: false
+        isFavorite:
+          type: boolean
+          description: Indicates if this recipe is in the user's favorites
+          example: false
+      example:
+        id: 3
+        image: chicken.png
+        title: chicken with potatos
+        readyInMinutes: 100
+        popularity: 100
+        isVegan: false
+        isVegetarian: false
+        isGlutenFree: false
+        isWatched: false
+        isFavorite: false
+
+    RecipePreviewWithInsructions:
+      type: object
+      required:
+        - id
+        - image
+        - title
+        - readyInMinutes
+        - popularity
+        - isVegan
+        - isVegetarian
+        - isGlutenFree
+        - isWatched
+        - isFavorite
+        - instructions
+      properties:
+        recipeId:
+          type: integer
+          description: recipe unique identifier
+          example: 3
+        image:
+          type: string
+          description: path to png/jpg
+          example: chicken.png
+        title:
+          type: string
+          description: only letters, dish description .
+          example: chicken with potatos
+        readyInMinutes:
+          type: integer
+          description: preparation time in minutes.
+          example: 100
+        popularity:
+          type: integer
+          description: number of likes the recipe got. Shows popularity
+          example: 100
+        isVegan:
+          type: boolean
+          description: Indicates if the dish is vegan
+          example: false
+        isVegetarian:
+          type: boolean
+          description: Indicates if the dish is vegetarian
+          example: false
+        isGlutenFree:
+          type: boolean
+          description: Indicates if the dish is gluten free
+          example: false
+        isWatched:
+          type: boolean
+          description: Indicates if the user already watched this recipe
+          example: false
+        isFavorite:
+          type: boolean
+          description: Indicates if this recipe is in the user's favorites
+          example: false
+        instructions:
+          type: string
+          description: instructions to prepare meal
+          example: "put in oven, heat to 200 degrees..."
+      example:
+        id: 3
+        image: chicken.png
+        title: chicken with potatos
+        readyInMinutes: 100
+        popularity: 100
+        isVegan: false
+        isVegetarian: false
+        isGlutenFree: false
+        isWatched: false
+        isFavorite: false
+        instructions: "put in oven, heat to 200 degrees..."
+
+    NewRecipeForm:
+      type: object
+      required:
+        - image
+        - title
+        - readyInMinutes
+        - isVegan
+        - isVegetarian
+        - isGlutenFree
+        - ingredients
+        - instructions
+        - servings
+      properties:
+        image:
+          type: string
+          description: path to png/jpg
+          example: chicken.png
+        title:
+          type: string
+          description: only letters, dish description .
+          example: chicken with potatos
+        readyInMinutes:
+          type: integer
+          description: preparation time in minutes.
+          example: 100
+        isVegan:
+          type: boolean
+          description: Indicates if the dish is vegan
+          example: false
+        isVegetarian:
+          type: boolean
+          description: Indicates if the dish is vegetarian
+          example: false
+        isGlutenFree:
+          type: boolean
+          description: Indicates if the dish is gluten free
+          example: false
+        ingredients:
+          type: array
+          items:
+            $ref: "#/components/schemas/Ingredient"
+          description: list of ingredients and quantites
+          example: sugar - 50 gr, salt - 100 gr, 5 potatos
+        instructions:
+          type: string
+          description: instructions to prepare to dish
+          example: put in oven and wait 1 hour
+        servings:
+          type: integer
+          description: how many dishes can be prepared from this recipe
+          example: 4
+      example:
+        image: chicken.png
+        title: chicken with potatos
+        readyInMinutes: 100
+        isVegan: false
+        isVegetarian: false
+        isGlutenFree: false
+        ingredients: [{ name: sugar, quantity: 50, units: gr }]
+        instructions: put in oven
+        servings: 4
+
+    Recipe:
+      type: object
+      required:
+        - id
+        - image
+        - title
+        - readyInMinutes
+        - popularity
+        - isVegan
+        - isVegetarian
+        - isGlutenFree
+        - isWatched
+        - isFavorite
+        - ingredients
+        - instructions
+        - servings
       properties:
         id:
           type: integer
-          description: recipe identifier
-          example: 102
-        title:
-          type: string
-          description: recipe name
-          example: Simple Macaroni and Cheese
+          description: recipe unique identifier
+          example: 3
         image:
           type: string
-          description: recipe image
-          format: URL
-          example: https://spoonacular.com/recipeimages/655455-566x370.jpg
+          description: path to png/jpg
+          example: chicken.png
+        title:
+          type: string
+          description: only letters, dish description .
+          example: chicken with potatos
         readyInMinutes:
           type: integer
-          description: the time takes to make this recipe
-          example: 45
+          description: preparation time in minutes.
+          example: 100
         popularity:
           type: integer
-          description: how many likes got this recipe
-          example: 5987
-        vegetarian:
+          description: number of likes the recipe got. Shows popularity
+          example: 100
+        isVegan:
           type: boolean
-          description: indication if the recipe is vegetarian
+          description: Indicates if the dish is vegan
           example: false
-        vegan:
+        isVegetarian:
           type: boolean
-          description: indication if the recipe is vegan
+          description: Indicates if the dish is vegetarian
           example: false
-        glutenFree:
+        isGlutenFree:
           type: boolean
-          description: indication if the recipe is gluten free
+          description: Indicates if the dish is gluten free
           example: false
-  
+        isWatched:
+          type: boolean
+          description: Indicates if the user already watched this recipe
+          example: false
+        isFavorite:
+          type: boolean
+          description: Indicates if this recipe is in the user's favorites
+          example: false
+        ingredients:
+          type: array
+          items:
+            $ref: "#/components/schemas/Ingredient"
+          description: list of ingredients and quantites
+          example: sugar - 50 gr, salt - 100 gr, 5 potatos
+        instructions:
+          type: string
+          description: instructions to prepare to dish
+          example: put in oven and wait 1 hour
+        servings:
+          type: integer
+          description: how many dishes can be prepared from this recipe
+          example: 4
+      example:
+        id: 3
+        image: chicken.png
+        title: chicken with potatos
+        readyInMinutes: 100
+        popularity: 100
+        isVegan: false
+        isVegetarian: false
+        isGlutenFree: false
+        isWatched: false
+        isFavorite: false
+        ingredients: [{ name: sugar, quantity: 50, units: gr }]
+        instructions: put in oven
+        servings: 4
+
+    Ingredient:
+      type: object
+      required:
+        - ingredient
+        - quantity
+        - units
+      properties:
+        ingredient:
+          type: string
+          description: name of ingredient
+          example: sugar
+        quantity:
+          type: integer
+          description: quantity of ingredients
+          example: 5
+        units:
+          type: string
+          description: units of measurment of ingridients (gr, kg, liters, pieces, oz)
+          example: gr
+      example:
+        ingredient: potatos
+        quantity: 5
+        units: pieces
+
+    familyRecipe:
+      type: object
+      required:
+        - recipeId
+        - title
+        - owner
+        - whenDeserved
+        - instructions
+        - image
+        - ingredients
+      properties:
+        recipeId:
+          type: integer
+          description: the family's recipe id
+          example: 73123
+        title:
+          type: string
+          description: name of the recipe
+          example: chicken
+        owner:
+          type: string
+          description: the owner of the recipe from the user's family
+          example: grandmother
+        whenDeserved:
+          type: string
+          description: when the family usually prepares this recipe
+          example: passover
+        instructions:
+          type: string
+          description: instruction to prepare the meal
+          example: put in oven for 5 minutes
+        image:
+          type: string
+          description: image path
+          example: .\chicken.png
+        ingredients:
+          type: array
+          items:
+            $ref: "#/components/schemas/Ingredient"
+          description: list of ingredients
+          example: sugar - 50 gr, salt - 100 gr, 5 potatos
+      example:
+        recipeId: 73123
+        title: chicken
+        owner: grandmother
+        whenDeserved: passover
+        instructions: put in oven for 5 minutes
+        image: .\chicken.png
+        ingredients: sugar - 50 gr, salt - 100 gr, 5 potatos
