@@ -160,7 +160,8 @@ async function getRandomRecipesAPI() {
 async function getRandomRecipes(username) {
   let recipes_info = await getRandomRecipesAPI();
   let recipes = [];
-  recipes_info.data.recipes.map(async (recipe) => {
+  // recipes_info.data.recipes.map(async (recipe) => {
+  for (let i = 0; i < recipes_info.data.recipes.length; i++) {
     let {
       id,
       title,
@@ -170,13 +171,11 @@ async function getRandomRecipes(username) {
       vegan,
       vegetarian,
       glutenFree,
-    } = recipe;
-
+    } = recipes_info.data.recipes[i];
     let isWatched = username ? await user_utils.isWatched(username, id) : false;
     let isFavorite = username
       ? await user_utils.isFavorite(username, id)
       : false;
-
     recipes.push({
       id: id,
       title: title,
@@ -189,8 +188,7 @@ async function getRandomRecipes(username) {
       isWatched: isWatched,
       isFavorite: isFavorite,
     });
-  });
-
+  }
   return recipes;
 }
 
