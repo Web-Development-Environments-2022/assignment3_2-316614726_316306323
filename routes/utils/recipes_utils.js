@@ -160,7 +160,6 @@ async function getRandomRecipesAPI() {
 async function getRandomRecipes(username) {
   let recipes_info = await getRandomRecipesAPI();
   let recipes = [];
-  // recipes_info.data.recipes.map(async (recipe) => {
   for (let i = 0; i < recipes_info.data.recipes.length; i++) {
     let {
       id,
@@ -196,6 +195,7 @@ async function SearchRecipesAPI(queryParams) {
   queryParams["apiKey"] = process.env.spooncular_apiKey;
   queryParams["number"] ? null : (queryParams["number"] = 5);
   queryParams["instructionsRequired"] = true;
+  queryParams["addRecipeInformation"] = true;
   return await axios.get(`${api_domain}/complexSearch`, {
     params: queryParams,
   });
@@ -203,10 +203,33 @@ async function SearchRecipesAPI(queryParams) {
 
 async function SearchRecipes(username, queryParams) {
   let recipes_info = await SearchRecipesAPI(queryParams);
-  recipesId = [];
-  recipes_info.data.results.map((recipe) => recipesId.push(recipe.id));
-  let resultRecipes = await getRecipesPreview(username, recipesId);
-  return resultRecipes;
+  return await extractRecipesPreview(username, recipes_info.data.results);
+}
+
+async function extractRecipesPreview(username, recipes) {
+  let recipesToReturn = [];
+  for (let i = 0; i < recipes.length; i++) {
+    let recipe = recipes[i];
+    let isWatched = username
+      ? await user_utils.isWatched(username, recipe.id)
+      : false;
+    let isFavorite = username
+      ? await user_utils.isFavorite(username, recipe.id)
+      : false;
+    recipesToReturn.push({
+      id: recipe.id,
+      title: recipe.title,
+      readyInMinutes: recipe.readyInMinutes,
+      image: recipe.image,
+      popularity: recipe.aggregateLikes,
+      isVegan: recipe.vegan,
+      isVegetarian: recipe.vegetarian,
+      isGlutenFree: recipe.glutenFree,
+      isWatched: isWatched,
+      isFavorite: isFavorite,
+    });
+  }
+  return recipesToReturn;
 }
 
 async function getRecipesPreview(username, recipesArray) {
