@@ -10,6 +10,7 @@ router.get("/", (req, res) => res.send("im here"));
  */
 router.get("/getRandomRecipes", async (req, res, next) => {
   try {
+    console.log(req.session);
     const username = req.session.username;
     const recipes = await recipes_utils.getRandomRecipes(username);
     res.send(recipes);

@@ -195,6 +195,7 @@ async function getRandomRecipes(username) {
 async function SearchRecipesAPI(queryParams) {
   queryParams["apiKey"] = process.env.spooncular_apiKey;
   queryParams["number"] ? null : (queryParams["number"] = 5);
+  queryParams["instructionsRequired"] = true;
   return await axios.get(`${api_domain}/complexSearch`, {
     params: queryParams,
   });
@@ -205,16 +206,7 @@ async function SearchRecipes(username, queryParams) {
   recipesId = [];
   recipes_info.data.results.map((recipe) => recipesId.push(recipe.id));
   let resultRecipes = await getRecipesPreview(username, recipesId);
-  resultRecipes = await addInstructionsToRecipes(resultRecipes);
   return resultRecipes;
-}
-
-async function addInstructionsToRecipes(recipes) {
-  for (let i = 0; i < recipes.length; i++) {
-    let recipeAPI = await getRecipe(null, recipes[i].id);
-    recipes[i].instructions = recipeAPI.instructions;
-  }
-  return recipes;
 }
 
 async function getRecipesPreview(username, recipesArray) {
