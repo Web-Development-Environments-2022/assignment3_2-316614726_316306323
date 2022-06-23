@@ -32,7 +32,7 @@ async function getRecipePreview(username, recipe_id) {
   if (personalRecipeFound) {
     let recipe = await getRecipeInformationDB(recipe_id); // create the recipe
     return {
-      id: recipe.id,
+      id: recipe.recipeId,
       title: recipe.title,
       readyInMinutes: recipe.prepTimeInMinutes,
       image: recipe.image,
@@ -75,7 +75,8 @@ async function checkPersonalRecipe(username, recipe_id) {
   let recipe = await DButils.execQuery(
     `SELECT recipeId FROM personal WHERE username='${username}' AND recipeId='${recipe_id}'`
   );
-  return recipe[0] ? true : false;
+  let res = recipe[0] ? true : false;
+  return res;
 }
 
 async function getRecipeInformationDB(recipe_id) {
@@ -93,7 +94,7 @@ async function getRecipeInformationDB(recipe_id) {
 
 async function getIngredientsRecipeDB(recipe_id) {
   let recipeIng = await DButils.execQuery(
-    `SELECT ingredient,quantity,units FROM recipeingredients WHERE recipeId='${recipe_id}'`
+    `SELECT name,amount,unit FROM recipeingredients WHERE recipeId='${recipe_id}'`
   );
   return recipeIng;
 }

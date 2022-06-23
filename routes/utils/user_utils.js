@@ -33,8 +33,11 @@ async function getFamilyRecipes(username) {
 
   for (let i = 0; i < recipes.length; i++) {
     recipes[i].ingredients = await DButils.execQuery(
-      `select ingredient,quantity,units from recipeingredients where recipeId='${recipes[i].recipeId}'`
+      `select name,amount,unit from recipeingredients where recipeId='${recipes[i].recipeId}'`
     );
+    let id = recipes[i].recipeId;
+    delete recipes[i]["recipeId"];
+    recipes[i]["id"] = id;
   }
   return recipes;
 }
