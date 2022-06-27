@@ -1,16 +1,19 @@
 var path = require("path");
-var app = require("./app");
+var app = require("./main");
 // var debug = require('debug')('modamedic:server');
 // var http = require('http');
 var https = require("https");
 var fs = require("fs");
 
 var httpsOptions = {
-  key: fs.readFileSync(path.join(__dirname, "server.key")),
+  // key: fs.readFileSync(path.join(__dirname, "server.key")),
+  cert: fs.readFileSync(path.join(__dirname, "fullchain.pem")),
+  key: fs.readFileSync(path.join(__dirname, "privkey.pem")),
   // key: fs.readFileSync('server.key'),
   // key: fs.readFileSync("C:\\Users\\noyha\\IdeaProjects\\ProjectServer\\key.pem"),
-  // cert: fs.readFileSync("C:\\Users\\noyha\\IdeaProjects\\ProjectServer\\cert.pem")  key: fs.readFileSync("C:\\Users\\noyha\\IdeaProjects\\ProjectServer\\key.pem"),
-  cert: fs.readFileSync(path.join(__dirname, "server.cert")),
+  // cert: fs.readFileSync("C:\\Users\\user\\PestoRachelProject\\3.2\\assignment3_2-316614726_316306323\\fullchain.pem"),
+  // key: fs.readFileSync("C:\\Users\\user\\PestoRachelProject\\3.2\\assignment3_2-316614726_316306323\\privkey.pem"),
+  // cert: fs.readFileSync(path.join(__dirname, "server.cert")),
 };
 /**
  * Get port from environment and store in Express.
