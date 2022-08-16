@@ -273,7 +273,7 @@ async function addNewRecipe(username, recipe) {
     for (let i = 0; i < ingredients.length; i++) {
       let ing = ingredients[i];
       await DButils.execQuery(
-        `insert into recipeingredients values ('${id}','${ing.name}','${ing.quantity}','${ing.units}')`
+        `insert into recipeingredients values ('${id}','${ing.name}','${ing.amount}','${ing.unit}')`
       );
     }
   } catch (err) {

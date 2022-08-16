@@ -8,7 +8,6 @@ const recipe_utils = require("./utils/recipes_utils");
  * Authenticate all incoming requests by middleware
  */
 router.use(async function (req, res, next) {
-  console.log(req.session);
   if (req.session && req.session.username) {
     DButils.execQuery("SELECT username FROM users")
       .then((users) => {
@@ -95,7 +94,6 @@ router.get("/family", async (req, res, next) => {
 router.get("/lastWatches", async (req, res, next) => {
   try {
     const username = req.session.username;
-    console.log(username);
     const recipes_id = await user_utils.getLastWatches(username);
     let recipes_id_array = [];
     recipes_id.map((element) => recipes_id_array.push(element.recipeId)); //extracting the recipe ids into array
